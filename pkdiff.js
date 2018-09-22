@@ -8,7 +8,7 @@ const [, , ...args] = process.argv;
 // pkdiff <file-one> <file-two> -p <property1> -p <property2> --quiet
 
 // acceptance criteria:
-// 1. as for quiet mode - it should say true or nothing - empty string
+// 1. as for quiet mode - it should say true (objects are differ) or nothing - empty string
 // 2. If not with quiet flag -
 //   * it should throw an error if files not found
 //   * it should show the difference as specific object in case of diff found
