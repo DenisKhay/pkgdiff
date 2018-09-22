@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
+  "dependencies": {
+    "object-diff": "github:DenisKhay/object-diff#master"
   },
+  "bin": {
+    "pkdiff": "./pkdiff.js"
+  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC"
