@@ -59,18 +59,20 @@ if (args.length) {
 
 let diffTree = {};
 if (objectFields.length) {
-    for (let i = 0; i > objectFields.length; i++) {
+    for (let i = 0; i < objectFields.length; i++) {
         let treeFromIteration;
         const fromNewOb = lo.get(object1, objectFields[i], null);
         const fromOldOb = lo.get(object2, objectFields[i], null);
         if (fromNewOb && !fromOldOb) {
-            treeFromIteration = lo.set({}, objectFields[i], [fromNewOb, fromOldOb]);
-            lo.merge(diffTree, treeFromIteration);
+            lo.set(diffTree, objectFields[i], [fromNewOb, fromOldOb]);
+            continue;
+        }
+        if(!fromNewOb && !fromNewOb) {
             continue;
         }
         treeFromIteration = getObjectDiff(fromNewOb, fromOldOb);
         if (!lo.isEmpty(treeFromIteration)) {
-            lo.merge(diffTree, treeFromIteration);
+            lo.set(diffTree, objectFields[i], treeFromIteration);
         }
     }
 } else {
