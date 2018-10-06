@@ -55,7 +55,6 @@ try {
 let objectFields = [];
 if (args.length) {
     objectFields = findAllObjectFieldParams(args);
-    console.log('outputs:, args', objectFields, args);
 }
 
 let diffTree = {};
