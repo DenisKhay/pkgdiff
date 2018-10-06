@@ -1,22 +1,25 @@
 #!/usr/bin/env node
-const objectDiff = require('object-diff');
-const [, , ...args] = process.argv;
+const getObjectDiff = require('object-diff');
+const path = require('path');
+const lo = require('lodash');
+
+let [, , filePath1, filePath2, ...args] = process.argv;
 
 
 // it should looks like
 
-// pkdiff <file-one> <file-two> -p <property1> -p <property2> --quiet
+// pkdiff <file-one> <file-two> -p <property1> -p <property2>
 
 // acceptance criteria:
-// 1. as for quiet mode - it should say true (objects are differ) or nothing - empty string
-// 2. If not with quiet flag -
+
+// 3. Common rules
 //   * it should throw an error if files not found
+//   * it should show difference if one of provided properties not found in older file
 //   * it should show the difference as specific object in case of diff found
 //   * if objects are equal it should return nothing
-// 3. Common rules
 //   * it should compare whole objects till properties not provided
 //   * it should compare only exact given properties if it is provided by args
-//   * properties may have depth - for example it may looks like "dependency.tree.something-else" or even "dep.4.rty"
+//   * properties may have depth - for example it may looks like "dependency.tree.something-else" or even "dep[4].rty"
 
 // STEPS:
 //   1. Get all conditions
@@ -32,41 +35,50 @@ const [, , ...args] = process.argv;
 //   6. Returning result - regarding to whether --quiet flag presented or not
 
 
-const fileName1 = args[0];
-const fileName2 = args[1];
-const isQuiet = args.includes('--quiet') || args.includes('-q');
-
-
-
-if (!fileName1 || !fileName2) {
-    if (isQuiet) {
-        return;
-    } else {
-        throw new Error('Required at least two params')
-    }
+if (!filePath1 || !filePath2) {
+    throw new Error('Requird at least two params')
 }
+filePath1 = path.isAbsolute(filePath1) ? filePath1 : path.join(process.cwd(), filePath1);
+filePath2 = path.isAbsolute(filePath2) ? filePath2 : path.join(process.cwd(), filePath2);
 
-let args1 = args.slice(2);
-let objectFields;
 
-if (args1.length) {
-    objectFields = findAllObjectFieldParams(args1);
-    console.log('outputs:, args', objectFields, args1);
-}
-
-let objec1;
+let object1;
 let object2;
-
 try {
-objec1 = require(`${process.cwd()}/${fileName1}`);
-object2 = require(`${process.cwd()}/${fileName2}`);
+    object1 = require(filePath1);
+    object2 = require(filePath2);
 } catch (e) {
-    if(isQuiet){
-        return;
-    } else {
-        console.error(e);
-        throw new Error('Unable to find file');
+    console.error(e);
+    throw new Error('Unable to find file');
+}
+
+let objectFields = [];
+if (args.length) {
+    objectFields = findAllObjectFieldParams(args);
+    console.log('outputs:, args', objectFields, args);
+}
+
+let diffTree = {};
+if (objectFields.length) {
+    for (let i = 0; i > objectFields.length; i++) {
+        let treeFromIteration;
+        const fromNewOb = lo.get(object1, objectFields[i], null);
+        const fromOldOb = lo.get(object2, objectFields[i], null);
+        if (fromNewOb && !fromOldOb) {
+            treeFromIteration = lo.set({}, objectFields[i], [fromNewOb, fromOldOb]);
+            lo.merge(diffTree, treeFromIteration);
+            continue;
+        }
+        treeFromIteration = getObjectDiff(fromNewOb, fromOldOb);
+        if (!lo.isEmpty(treeFromIteration)) {
+            lo.merge(diffTree, treeFromIteration);
+        }
     }
+} else {
+    diffTree = getObjectDiff(object1, object2);
+}
+if (!lo.isEmpty(diffTree)) {
+    return console.log(diffTree);
 }
 
 
